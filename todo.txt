@@ -1,0 +1,5 @@
+check all mongo id as params are valid ids or not and also in gigs array 
+
+add gigs in talent controller left to test -> check after creating gigs 
+
+LinkGigsToClient in client controller left to check -> whether gig id's are present in gigs collection
