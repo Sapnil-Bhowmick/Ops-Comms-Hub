@@ -1,4 +1,9 @@
-# Problem Attempted -> PS03: Creative Ops & Comms Hub
+# Problem Attempted -> Creative Ops & Comms Hub
+
+# A Message
+  - The deadline was on 23rd July and I am submitting on 24th.
+  - While writing the README I found that the docs may have got updated and  "Submission Guidelines" in the google docs were not there.
+  - So I wrote the README based on what I thought would be good.
 
 # Setup Instructions
   - To start Locally
@@ -34,6 +39,7 @@
   - **jsonwebtoken** - Used for generating and verifying JSON Web Tokens (JWT) to handle secure authentication and authorization.
   - **bcrypt** -  To hash and compare passwords securely
   - **validator** - Utilities for validation
+  - **cors** - origin to be provided as needed for frontend to call api
 
 # Notes
   This project has been developed as part of a backend evaluation task and showcases structured code practices, modular architecture, and adherence to REST standards.
