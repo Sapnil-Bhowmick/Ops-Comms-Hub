@@ -13,15 +13,16 @@ const {
 } = require("../Controllers/Talent.controller.js")
 
 const { userAuth } = require("../Middleware/Auth.middleware.js")
+const { checkRole } = require("../Middleware/Role.middleware.js")
 
 
-TalentRouter.get("/", listTalents)
-TalentRouter.get("/:talentID", getSingleTalent)
-TalentRouter.post("/", userAuth , createTalent)
-TalentRouter.put("/:talentID", userAuth , updateTalent)
-TalentRouter.delete("/:talentID", userAuth , deleteTalent)
-TalentRouter.patch("/:talentID/notes", userAuth , addNotes)
-TalentRouter.patch("/:talentID/gigs", userAuth , LinkGigsToTalent)
+TalentRouter.get("/", userAuth, checkRole("ADMIN", "PROJECT_MANAGER"), listTalents);
+TalentRouter.get("/:talentID", userAuth, checkRole("ADMIN", "PROJECT_MANAGER", "TALENT"), getSingleTalent);
+TalentRouter.post("/", userAuth, checkRole("ADMIN", "PROJECT_MANAGER"), createTalent);
+TalentRouter.put("/:talentID", userAuth, checkRole("ADMIN", "PROJECT_MANAGER"), updateTalent);
+TalentRouter.delete("/:talentID", userAuth, checkRole("ADMIN"), deleteTalent);
+TalentRouter.patch("/:talentID/notes", userAuth, checkRole("ADMIN", "PROJECT_MANAGER"), addNotes);
+TalentRouter.patch("/:talentID/gigs", userAuth, checkRole("ADMIN", "PROJECT_MANAGER"), LinkGigsToTalent);
 
 
 module.exports = {

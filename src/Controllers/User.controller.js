@@ -15,7 +15,7 @@ const handleRegister = async (req, res, next) => {
         const { name, email, password, role } = req.body;
 
         // Validate role if provided
-        const allowedRoles = ['ADMIN', 'PROJECT_MANAGER', 'TALENT', 'VIEWER'];
+        const allowedRoles = ['ADMIN', 'PROJECT_MANAGER', 'TALENT', 'CLIENT'];
         if (!allowedRoles.includes(role)) {
             throw createHTTPError.BadRequest("Invalid Role Type")
         }

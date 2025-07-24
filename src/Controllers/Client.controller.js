@@ -29,8 +29,15 @@ const listClients = async (req, res, next) => {
 
 // & populate gigs
 const getSingleClient = async (req, res, next) => {
-    console.log("get client")
     try {
+
+         const { userID , role } = req.LoggedIn_UserInfo
+
+        // Only allow CLIENT to access their own data
+        if (role === "CLIENT" && userID.toString() !== req.params.clientID) {
+            throw createHttpError.Forbidden("You are not authorized to view this client.");
+        }
+
         const client = await Client.findById(req.params.clientID)
             .populate(
                 [

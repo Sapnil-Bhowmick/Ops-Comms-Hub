@@ -29,8 +29,8 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,  
-        enum: ['ADMIN', 'PROJECT_MANAGER', 'TALENT', 'VIEWER'],
-        default: 'viewer',
+        enum: ['ADMIN', 'PROJECT_MANAGER', 'TALENT', 'CLIENT'],
+        default: 'ADMIN',
         required: ["Please add a role"]
     },
     createdAt: { type: Date, default: Date.now }

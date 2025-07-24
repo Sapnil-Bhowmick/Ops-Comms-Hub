@@ -40,12 +40,30 @@ const getSingleGig = async (req, res, next) => {
             throw createHttpError.BadRequest("Invalid Gig ID");
         }
 
+        const { userID, role } = req.LoggedIn_UserInfo
+
+        // Only allow TALENT to access the Gigs which are assigned to them
+        if (role === "TALENT") {
+            const gig = await Gig.findById(req.params.GigID)
+            if (!gig.talentId.includes(userID)) {
+                throw createHttpError.Forbidden("Gig is not assigned to you.");
+            }
+        }
+
+        // Only allow client to access the Gig which is their requirement
+        if (role === "CLIENT") {
+            const gig = await Gig.findById(req.params.GigID)
+            if (!gig.clientId.toString() === userID.toString()) {
+                throw createHttpError.Forbidden("Gig is not assigned to you.");
+            }
+        }
+
         const gig = await Gig.findById(req.params.GigID)
             .populate([
                 { path: 'clientId' },
                 { path: 'talentId' },
-                { path: 'createdBy' , select: '-password'},
-                { path: "updates.updatedBy"  , select: '-password'}
+                { path: 'createdBy', select: '-password' },
+                { path: "updates.updatedBy", select: '-password' }
             ]);
 
         if (!gig) throw createHttpError.NotFound('Gig not found');
@@ -68,7 +86,7 @@ const createGig = async (req, res, next) => {
         validateGigPayload(req.body)
 
         const isClientExists = await Client.findById(req.body.clientId)
-        if(!isClientExists) throw createHttpError.BadRequest("Client Does Not Exist")
+        if (!isClientExists) throw createHttpError.BadRequest("Client Does Not Exist")
 
         const { userID, role } = req.LoggedIn_UserInfo
 
@@ -141,6 +159,16 @@ const addGigUpdates = async (req, res, next) => {
 
         validateUpdateArray(req.body.updates);
 
+        const { userID, role } = req.LoggedIn_UserInfo
+
+        // Only allow TALENT to access the Gigs which are assigned to them
+        if (role === "TALENT") {
+            const gig = await Gig.findById(req.params.GigID)
+            if (!gig.talentId.includes(userID)) {
+                throw createHttpError.Forbidden("Gig is not assigned to you.");
+            }
+        }
+
         const updatesArr = req.body.updates.map(update => ({
             text: update.text,
             createdAt: update.createdAt || new Date(),
@@ -179,6 +207,16 @@ const addGigDeliverables = async (req, res, next) => {
 
         validateDeliverables(deliverables);
 
+        const { userID, role } = req.LoggedIn_UserInfo
+
+        // Only allow TALENT to access the Gigs which are assigned to them
+        if (role === "TALENT") {
+            const gig = await Gig.findById(req.params.GigID)
+            if (!gig.talentId.includes(userID)) {
+                throw createHttpError.Forbidden("Gig is not assigned to you.");
+            }
+        }
+
         const updatedGig = await Gig.findByIdAndUpdate(
             gigId,
             {
@@ -206,6 +244,70 @@ const addGigDeliverables = async (req, res, next) => {
 
 
 
+const addTalent = async (req, res, next) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.GigID)) {
+            throw createHttpError.BadRequest("Invalid Gig ID");
+        }
+
+        const talents = req.body.talentId
+        const invalidIds = talents.filter(id => !mongoose.Types.ObjectId.isValid(id));
+        if (invalidIds.length > 0) {
+            const err = createHttpError.BadRequest("Invalid gig IDs provided.")
+            err.invalidIds = invalidIds;
+            throw err;
+        }
+
+        const updatedGig = await Gig.findByIdAndUpdate(
+            req.params.GigID,
+            {
+                // To prevent duplicates
+                $addToSet: {
+                    talentId: { $each: talents }
+                },
+                $set: {
+                    updatedAt: new Date()
+                }
+            },
+            { new: true }
+        )
+
+        res.json({
+            message: "Talent added Successfully",
+            data: updatedGig
+        })
+    }
+    catch (err) {
+        next(err)
+    }
+}
+
+
+const deleteTalent = async (req, res, next) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.GigID)) {
+            throw createHttpError.BadRequest("Invalid Gig ID");
+        }
+
+        const talentID = req.body.talentID
+
+        let gig = await Gig.findById(req.params.GigID)
+        const filteredTalent_Ids = gig.talentId.filter((talent_ID) => talent_ID.toString() !== talentID.toString())
+
+        gig.talentId = filteredTalent_Ids
+        gig = await Gig.create(gig)
+
+        res.json({
+            message: "Talent Deleted Successfully",
+            data: gig
+        })
+    }
+    catch (err) {
+        next(err)
+    }
+}
+
+
 
 
 module.exports = {
@@ -215,5 +317,7 @@ module.exports = {
     updateGig,
     deleteGig,
     addGigUpdates,
-    addGigDeliverables
+    addGigDeliverables,
+    addTalent,
+    deleteTalent
 }

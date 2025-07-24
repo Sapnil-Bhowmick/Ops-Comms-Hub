@@ -32,6 +32,12 @@ const getSingleTalent = async (req, res, next) => {
         if (!mongoose.Types.ObjectId.isValid(req.params.talentID)) {
             throw createHttpError.BadRequest("Invalid Talent ID");
         }
+
+        // Only allow TALENT to access their own data
+        if (role === "TALENT" && userID.toString() !== req.params.talentID) {
+            throw createHttpError.Forbidden("You are not authorized to view this talent.");
+        }
+
         const talent = await Talent.findById(req.params.talentID)
             .populate(
                 [

@@ -41,29 +41,31 @@ const validateClientUpdate = async(body) => {
     const allowedFields = ['name', 'email', 'phone', 'company', 'address', "linkedGigs", "notes"];
     const updates = {};
 
+    console.log("BODY -------> " , body.notes)
+
     for (let field of allowedFields) {
         if (body[field] !== undefined) {
             updates[field] = body[field];
         }
     }
 
-    if (notes && (notes.length === 0 || !Array.isArray(notes))) {
+    if (body.notes && (body.notes.length === 0 || !Array.isArray(body.notes))) {
         throw createHttpError.BadRequest("Notes should be non-empty array");
     }
 
-    if (linkedGigs && (linkedGigs.length === 0 || !Array.isArray(linkedGigs))) {
+    if (body.linkedGigs && (body.linkedGigs.length === 0 || !Array.isArray(linkedGigs))) {
         throw createHttpError.BadRequest("linkedGigs should be non-empty array");
     }
 
 
-    if (linkedGigs) {
+    if (body.linkedGigs) {
         // To check for invalid Gig Id's
-        const gigs = await Gig.find({ _id: { $in: linkedGigs } });
+        const gigs = await Gig.find({ _id: { $in: body.linkedGigs } });
         const foundIds = gigs.map(g => g._id.toString());
-        const invalidIds = linkedGigs.filter(id => !foundIds.includes(id));
+        const invalidIds = body.linkedGigs.filter(id => !foundIds.includes(id));
 
         if (invalidIds.length > 0) {
-            const err = createHTTPError.BadRequest("Invalid gig IDs provided.");
+            const err = createHttpError.BadRequest("Invalid gig IDs provided.");
             err.invalidIds = { invalidIds };
             throw err;
         }
