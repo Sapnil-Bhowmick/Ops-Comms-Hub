@@ -30,7 +30,11 @@ const commLogSchema = new mongoose.Schema({
     sender: String,
     receivedAt: Date,
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now , required: true },
+    updatedAt: {
+        type: Date,
+        default: Date.now
+    }
 });
 
 module.exports = mongoose.model('CommLog', commLogSchema);

@@ -52,6 +52,49 @@ const validateCreateTalent = async (req) => {
 
 
 
+const validateTalentUpdate = (data) => {
+    const allowedFields = ['name', 'email', 'phone', 'skillset', 'profilePicUrl', 'notes', 'linkedGigs'];
+    const keys = Object.keys(data);
+
+    console.log(keys)
+
+    // Check for invalid fields
+    const invalidFields = keys.filter(key => !allowedFields.includes(key));
+    if (invalidFields.length > 0) {
+        throw createHTTPError.BadRequest(`Invalid fields in update: ${invalidFields.join(', ')}`);
+    }
+
+    // Check Specific Fields
+    if (data.name && typeof data.name !== 'string') {
+        throw createHTTPError.BadRequest("Name must be a string.");
+    }
+
+    if (data.email && typeof data.email !== 'string') {
+        throw createHTTPError.BadRequest("Email must be a string.");
+    }
+
+    if (data.phone && !/^\d{10}$/.test(data.phone)) {
+        throw createHTTPError.BadRequest("Phone number must be 10 digits.");
+    }
+
+    if (data.skillset) {
+        if (!Array.isArray(data.skillset) || data.skillset.length === 0 || !data.skillset.every(s => typeof s === 'string')) {
+            throw createHTTPError.BadRequest("Skillset must be a non-empty array of strings.");
+        }
+    }
+
+    if (data.notes && !Array.isArray(data.notes)) {
+        throw createHTTPError.BadRequest("Notes must be an array.");
+    }
+
+    if (data.linkedGigs && !Array.isArray(data.linkedGigs)) {
+        throw createHTTPError.BadRequest("linkedGigs must be an array of IDs.");
+    }
+}
+
+
+
 module.exports = {
-    validateCreateTalent
+    validateCreateTalent,
+    validateTalentUpdate
 }

@@ -1,16 +1,21 @@
-const { validateCreateTalent } = require("../Services/Talent.service")
+const { validateCreateTalent, validateTalentUpdate } = require("../Services/Talent.service")
 const createHTTPError = require("http-errors")
 const Talent = require("../Models/Talent.model.js")
 const createHttpError = require("http-errors")
 
 const Gig = require("../Models/Gig.model.js")
-
+const mongoose = require("mongoose")
 
 const listTalents = async (req, res, next) => {
     try {
         const talents = await Talent.find()
-            .populate({ path: 'createdBy', select: '-password' })
-            .populate('linkedGigs');
+            .populate(
+                [
+                    { path: 'createdBy', select: '-password' },
+                    { path: 'linkedGigs' }
+                ]
+            )
+
         res.json({
             message: "Talents Fetched Successfully",
             data: talents
@@ -24,9 +29,17 @@ const listTalents = async (req, res, next) => {
 
 const getSingleTalent = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.talentID)) {
+            throw createHttpError.BadRequest("Invalid Talent ID");
+        }
         const talent = await Talent.findById(req.params.talentID)
-            .populate({ path: 'createdBy', select: '-password' })
-            .populate('linkedGigs');
+            .populate(
+                [
+                    { path: 'createdBy', select: '-password' },
+                    { path: 'linkedGigs' }
+                ]
+            )
+
         if (!talent) throw createHTTPError.NotFound("Talent not found");
         res.json({
             message: "Talent Fetched Successfully",
@@ -69,17 +82,55 @@ const createTalent = async (req, res, next) => {
 const updateTalent = async (req, res, next) => {
     try {
 
-    }
-    catch (err) {
-        next(err)
+        validateTalentUpdate(req.body)
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.talentID)) {
+            throw createHttpError.BadRequest("Invalid Talent ID");
+        }
+
+        const updatedTalent = await Talent.findByIdAndUpdate(
+            req.params.talentID,
+            {
+                $set: {
+                    ...req.body,
+                    updatedAt: Date.now()
+                }
+            },
+            {
+                new: true,
+                runValidators: true
+            }
+        ).populate(
+            [
+                { path: 'createdBy', select: '-password' },
+                { path: 'linkedGigs' }
+            ]
+        )
+
+        if (!updatedTalent) {
+            throw createHTTPError.NotFound("Talent not found");
+        }
+
+        res.json({ message: "Talent Updated successfully.", data: updatedTalent });
+    } catch (err) {
+        next(err);
     }
 }
 
 const deleteTalent = async (req, res, next) => {
     try {
-        const deletedTalent = await Talent.findByIdAndDelete(req.params.talentID);
+        if (!mongoose.Types.ObjectId.isValid(req.params.talentID)) {
+            throw createHttpError.BadRequest("Invalid Talent ID");
+        }
+        const deletedTalent = await Talent.findByIdAndDelete(req.params.talentID)
+            .populate(
+                [
+                    { path: 'createdBy', select: '-password' },
+                    { path: 'linkedGigs' }
+                ]
+            )
         if (!deletedTalent) throw createHTTPError.NotFound("Talent not found");
-        res.json({ message: "Talent deleted successfully."  , data: deletedTalent});
+        res.json({ message: "Talent deleted successfully.", data: deletedTalent });
     } catch (err) {
         next(err);
     }
@@ -93,11 +144,20 @@ const addNotes = async (req, res, next) => {
         if (!Array.isArray(notes) || notes.length === 0)
             throw createHTTPError.BadRequest("Notes must be a non-empty array.");
 
+        if (!mongoose.Types.ObjectId.isValid(req.params.talentID)) {
+            throw createHttpError.BadRequest("Invalid Talent ID");
+        }
+
         const updatedTalent = await Talent.findByIdAndUpdate(
             req.params.talentID,
             { $push: { notes: { $each: notes } }, updatedAt: Date.now() },
             { new: true }
-        );
+        ).populate(
+            [
+                { path: 'createdBy', select: '-password' },
+                { path: 'linkedGigs' }
+            ]
+        )
         if (!updatedTalent) throw createHTTPError.NotFound("Talent not found");
         res.json(updatedTalent);
     } catch (err) {
@@ -111,6 +171,10 @@ const LinkGigsToTalent = async (req, res, next) => {
         const { gigIds } = req.body;
         if (!Array.isArray(gigIds) || gigIds.length === 0)
             throw createHTTPError.BadRequest("GigIds must be a non-empty array.");
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.talentID)) {
+            throw createHttpError.BadRequest("Invalid Talent ID");
+        }
 
         const gigs = await Gig.find({ _id: { $in: gigIds } });
         const foundIds = gigs.map(g => g._id.toString());
@@ -126,7 +190,12 @@ const LinkGigsToTalent = async (req, res, next) => {
             req.params.talentID,
             { $addToSet: { linkedGigs: { $each: gigIds } }, updatedAt: Date.now() },
             { new: true }
-        );
+        ).populate(
+            [
+                { path: 'createdBy', select: '-password' },
+                { path: 'linkedGigs' }
+            ]
+        )
 
         if (!updatedTalent) throw createHTTPError.NotFound("Talent not found");
 

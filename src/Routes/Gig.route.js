@@ -7,7 +7,9 @@ const {
     getSingleGig,
     createGig,
     updateGig,
-    deleteGig
+    deleteGig,
+    addGigUpdates,
+    addGigDeliverables
 } = require("../Controllers/Gig.controller.js")
 
 const {userAuth} = require("../Middleware/Auth.middleware.js")
@@ -15,8 +17,10 @@ const {userAuth} = require("../Middleware/Auth.middleware.js")
 GigRouter.get("/", listGigs)
 GigRouter.get("/:GigID" , getSingleGig)
 GigRouter.post("/", userAuth , createGig)
-GigRouter.put("/:gigID", userAuth , updateGig)
-GigRouter.delete("/:gigID", userAuth , deleteGig)
+GigRouter.put("/:GigID", userAuth , updateGig)
+GigRouter.delete("/:GigID", userAuth , deleteGig)
+GigRouter.patch("/:GigID/updates" , userAuth , addGigUpdates)
+GigRouter.patch("/:GigID/deliverables" , userAuth , addGigDeliverables)
 
 
 module.exports = {

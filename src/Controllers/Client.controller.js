@@ -10,7 +10,12 @@ const mongoose = require("mongoose")
 const listClients = async (req, res, next) => {
     try {
         const clients = await Client.find()
-            .populate({ path: "createdBy", select: "-password" });
+            .populate(
+                [
+                    { path: "createdBy", select: "-password" },
+                    { path: "linkedGigs" }
+                ]
+            );
         res.json({
             message: "All Clients Feteched Succesfully",
             data: clients
@@ -27,7 +32,12 @@ const getSingleClient = async (req, res, next) => {
     console.log("get client")
     try {
         const client = await Client.findById(req.params.clientID)
-            .populate({ path: "createdBy", select: "-password" });
+            .populate(
+                [
+                    { path: "createdBy", select: "-password" },
+                    { path: "linkedGigs" }
+                ]
+            );
 
         if (!client) {
             throw createHttpError.NotFound("Client not found")
@@ -85,7 +95,12 @@ const updateClient = async (req, res, next) => {
             { $set: updates },
             { new: true, runValidators: true }
         )
-            .populate({ path: 'createdBy', select: '-password' });
+            .populate(
+                [
+                    { path: "createdBy", select: "-password" },
+                    { path: "linkedGigs" }
+                ]
+            );
 
         if (!updatedClient) {
             throw createHTTPError.NotFound("Client not found.")
@@ -106,7 +121,7 @@ const updateClient = async (req, res, next) => {
 const deleteClient = async (req, res, next) => {
     try {
         const deletedClient = await Client.findByIdAndDelete(req.params.clientID);
-        if(!deletedClient){
+        if (!deletedClient) {
             throw createHTTPError.NotFound("Client Not Found")
         }
 
@@ -142,6 +157,11 @@ const addNotesToClient = async (req, res, next) => {
                 }
             },
             { new: true }
+        ).populate(
+            [
+                { path: "createdBy", select: "-password" },
+                { path: "linkedGigs" }
+            ]
         );
 
         if (!updatedClient) {
@@ -162,7 +182,7 @@ const addNotesToClient = async (req, res, next) => {
 
 const LinkGigsToClient = async (req, res, next) => {
     try {
-        const { clientId } = req.params;
+        const { clientID } = req.params;
         const { gigIds } = req.body; // expects an array of ObjectId strings
 
         if (!Array.isArray(gigIds) || gigIds.length === 0) {
@@ -173,12 +193,12 @@ const LinkGigsToClient = async (req, res, next) => {
         const invalidIds = gigIds.filter(id => !mongoose.Types.ObjectId.isValid(id));
         if (invalidIds.length > 0) {
             const err = createHTTPError.BadRequest("Invalid gig IDs provided.")
-            err.invalidIds = invalidIds; 
+            err.invalidIds = invalidIds;
             throw err;
         }
 
         const updatedClient = await Client.findByIdAndUpdate(
-            clientId,
+            clientID,
             {
                 // To prevent duplicates
                 $addToSet: {
@@ -190,7 +210,12 @@ const LinkGigsToClient = async (req, res, next) => {
             },
             { new: true }
         )
-            .populate({ path: "createdBy", select: "-password" })
+            .populate(
+                [
+                    { path: "createdBy", select: "-password" },
+                    { path: "linkedGigs" }
+                ]
+            );
 
         if (!updatedClient) {
             throw createHTTPError.NotFound("Client not found.")
